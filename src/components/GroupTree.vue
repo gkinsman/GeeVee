@@ -26,8 +26,8 @@
       <template v-slot:default-header="prop">
         <div class="row items-center">
           <q-icon
-            :name="getNodeIcon(prop.node)"
-            color="grey"
+            :name="getNodeIcon(prop.node)[1]"
+            :color="getNodeIcon(prop.node)[0]"
             size="16px"
             class="q-mr-sm"
           />
@@ -57,10 +57,10 @@ const emit = defineEmits<{
   (e: 'selection-changed', node: GroupTreeNode): void
 }>()
 
-function getNodeIcon(node: GroupTreeNode) {
-  if (node.loader.loading) return 'sync'
-  if (node.loadedVariables) return 'check'
-  return 'help_outline'
+function getNodeIcon(node: GroupTreeNode): [string, string] {
+  if (node.loader.loading) return ['yellow', 'sync']
+  if (node.loadedVariables) return ['green', 'check_circle']
+  return ['grey', 'help_outline']
 }
 
 async function selectedChanged(newSelection: string) {

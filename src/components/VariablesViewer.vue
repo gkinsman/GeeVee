@@ -15,7 +15,7 @@ import { computed, Ref } from 'vue'
 import { groupBy } from 'src/util/array'
 
 const props = defineProps<{
-  variables: VariableSchema[] | null
+  variables: VariableSchema[]
 }>()
 
 const groups = computed(() =>

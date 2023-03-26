@@ -30,7 +30,7 @@ import { GroupTreeNode } from 'stores/group-tree-node'
 const splitter = ref(400)
 
 const selectedGroup: Ref<GroupTreeNode | null> = ref(null)
-const variables: Ref<VariableSchema[] | null> = ref(null)
+const variables: Ref<VariableSchema[]> = ref([])
 const inheritedVariables: Ref<{ [key: string]: VariableSchema[] }> = ref({})
 
 const groupStore = useGroupStore()
@@ -43,24 +43,8 @@ const groupTree = groupStore.groupTree
 async function nodeChanged(node: GroupTreeNode) {
   selectedGroup.value = node
 
-  // when is variables.value getting set to undefined?!
+  variables.value = await variableStore.getVariables(node)
 
-  if (node.groupInfo) {
-    const groupId = selectedGroup.value?.groupInfo?.id
-    if (!groupId) return
-    const selfVariables = await variableStore.getGroupVariables(groupId)
-
-    variables.value = selfVariables
-  } else if (node.projectInfo) {
-    const projectId = selectedGroup.value?.projectInfo?.id
-    if (!projectId) return
-    const selfVariables = await variableStore.getProjectVariables(projectId)
-    variables.value = selfVariables
-  }
-
-  const inheritedVariables = await variableStore.getInheritedVariables(
-    node.id!,
-    node.type
-  )
+  const inheritedVariables = await variableStore.getInheritedVariables(node)
 }
 </script>

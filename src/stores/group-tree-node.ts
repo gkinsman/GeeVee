@@ -1,10 +1,10 @@
 ﻿import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
 import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
 import { Loader, useLoader } from 'src/util/loader'
-import { GroupMap } from 'stores/group-store'
+import { GroupProjectMap } from 'stores/group-store'
 
 export class GroupTreeNode {
-  public id?: number
+  public id?: string
   public children: GroupTreeNode[] = []
   public loader: Loader = useLoader()
 
@@ -36,18 +36,21 @@ export class GroupTreeNode {
     return this.children.find((c) => c.name === name)
   }
 
-  populateGroup(info: GroupSchema, groupMap: GroupMap) {
+  populateGroup(info: GroupSchema, groupMap: GroupProjectMap) {
     this.groupInfo = info
-    this.id = info.id
+    this.id = `group-${info.id}`
 
-    groupMap.set(`group-${this.id}`, this)
+    groupMap.set(this.id, this)
 
     return this
   }
 
-  populateProject(info: ProjectSchema) {
+  populateProject(info: ProjectSchema, groupMap: GroupProjectMap) {
     this.projectInfo = info
-    this.id = info.id
+    this.id = `project-${info.id}`
+
+    groupMap.set(this.id, this)
+
     return this
   }
 }

@@ -15,17 +15,13 @@ export const useVariableStore = defineStore('variables', () => {
   const projectVariables: Ref<{ [key: number]: VariableSchema[] }> = ref({})
   const groupVariables: Ref<{ [key: number]: VariableSchema[] }> = ref({})
 
+  const variables: Ref<{ [key: string]: VariableSchema[] }> = ref({})
+
   const loader = useLoader()
 
-  async function getInheritedVariables(
-    groupId: number,
-    type: 'project' | 'group'
-  ): Promise<void> {
-    const { findNode, getNodeWithParents } = useGroupStore()
-    const nodeId = `${type}-${groupId}`
-    const node = findNode(nodeId)
-    if (!node) throw new Error(`Node with id ${nodeId} not found`)
-    const groups = getNodeWithParents(node!)
+  async function getInheritedVariables(node: GroupTreeNode): Promise<void> {
+    const { getNodeWithParents } = useGroupStore()
+    const groups = getNodeWithParents(node)
 
     const variableLoads = groups.map((g) =>
       g.loader.load(() => getVariables(g))
@@ -35,17 +31,19 @@ export const useVariableStore = defineStore('variables', () => {
   }
 
   async function getVariables(node: GroupTreeNode) {
+    let results = []
     if (node.type === 'project') {
-      await getProjectVariables(node.id!)
+      results = await getProjectVariables(node.projectInfo!.id)
     } else {
-      await getGroupVariables(node.id!)
+      results = await getGroupVariables(node.groupInfo!.id)
     }
-
     node.loadedVariables = true
+
+    return results
   }
 
   async function getGroupVariables(groupId: number): Promise<VariableSchema[]> {
-    if (groupVariables.value[groupId]) return projectVariables.value[groupId]
+    if (groupVariables.value[groupId]) return groupVariables.value[groupId]
 
     const { loadGroupVariables } = useGitlab()
     const loadedVariables = await loadGroupVariables(groupId)
@@ -67,8 +65,7 @@ export const useVariableStore = defineStore('variables', () => {
 
   return {
     loading: computed(() => loader.loading),
-    getGroupVariables,
-    getProjectVariables,
     getInheritedVariables,
+    getVariables,
   }
 })

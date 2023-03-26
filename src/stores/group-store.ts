@@ -7,7 +7,7 @@ import { useCache } from 'src/util/cache'
 import { parseNamespace } from 'src/util/gitlab'
 import { GroupTreeNode } from 'stores/group-tree-node'
 
-export type GroupMap = Map<string, GroupTreeNode>
+export type GroupProjectMap = Map<string, GroupTreeNode>
 
 export const useGroupStore = defineStore('groups', () => {
   const groupCache = useCache<GroupSchema[]>()
@@ -17,7 +17,7 @@ export const useGroupStore = defineStore('groups', () => {
   const projects: Ref<ProjectSchema[]> = ref([])
   const groupTree: Ref<GroupTreeNode[]> = ref([])
 
-  const groupProjectMap: GroupMap = new Map()
+  const groupProjectMap: GroupProjectMap = new Map()
 
   async function loadGroupsAndProjects() {
     const { listGroups } = useGitlab()
@@ -28,7 +28,7 @@ export const useGroupStore = defineStore('groups', () => {
 
     projects.value = await projectCache.loadOrSave(
       'projects',
-      async () => await listProjects(groupTree.value[0].id || 0)
+      async () => await listProjects(groupTree.value[0].groupInfo!.id)
     )
 
     populateTreeWithProjects()
@@ -70,11 +70,7 @@ export const useGroupStore = defineStore('groups', () => {
         const group = findGroupByPath(root, path)
 
         if (!group) continue
-        const newNode = new GroupTreeNode(proj.name, group).populateProject(
-          proj
-        )
-
-        addChild(group.children, newNode)
+        group.getOrAdd(proj.name).populateProject(proj, groupProjectMap)
       }
     }
   }
