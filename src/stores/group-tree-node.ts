@@ -11,8 +11,6 @@ export class GroupTreeNode {
   public groupInfo?: GroupSchema
   public projectInfo?: ProjectSchema
 
-  public loadedVariables = false
-
   get type() {
     if (this.groupInfo) return 'group'
     return 'project'

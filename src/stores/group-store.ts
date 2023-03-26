@@ -34,8 +34,8 @@ export const useGroupStore = defineStore('groups', () => {
     populateTreeWithProjects()
   }
 
-  function getNodeWithParents(group: GroupTreeNode): GroupTreeNode[] {
-    const results = [group]
+  function getNodesParents(group: GroupTreeNode): GroupTreeNode[] {
+    const results = []
     let parent = group.parent
 
     while (parent) {
@@ -111,9 +111,8 @@ export const useGroupStore = defineStore('groups', () => {
 
   return {
     loadGroupsAndProjects,
+    getNodesParents,
     groups,
     groupTree,
-    findNode,
-    getNodeWithParents,
   }
 })

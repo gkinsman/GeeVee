@@ -39,7 +39,6 @@
 </template>
 
 <script setup lang="ts">
-import { useGroupStore } from 'src/stores/group-store'
 import { Ref, ref } from 'vue'
 import { QTree } from 'quasar'
 import { GroupTreeNode } from 'stores/group-tree-node'
@@ -59,7 +58,7 @@ const emit = defineEmits<{
 
 function getNodeIcon(node: GroupTreeNode): [string, string] {
   if (node.loader.loading) return ['yellow', 'sync']
-  if (node.loadedVariables) return ['green', 'check_circle']
+  if (node.loader.loaded) return ['green', 'check_circle']
   return ['grey', 'help_outline']
 }
 

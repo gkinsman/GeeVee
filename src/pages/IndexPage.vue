@@ -11,7 +11,11 @@
       </template>
       <template v-slot:after>
         <div class="q-pa-md">
-          <variables-viewer :variables="variables"></variables-viewer>
+          <variables-viewer
+            :activeNode="selectedGroup"
+            :variables="variables"
+            :inherited-variables="inheritedVariables"
+          ></variables-viewer>
         </div>
       </template>
     </q-splitter>
@@ -22,7 +26,11 @@
 import GroupTree from 'src/components/GroupTree.vue'
 import { useGroupStore } from 'src/stores/group-store'
 import { Ref, ref } from 'vue'
-import { useVariableStore } from 'stores/variable-store'
+import {
+  EnvironmentVariableMap,
+  MultiEnvironmentVariableMap,
+  useVariableStore,
+} from 'stores/variable-store'
 import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
 import VariablesViewer from 'components/VariablesViewer.vue'
 import { GroupTreeNode } from 'stores/group-tree-node'
@@ -30,8 +38,8 @@ import { GroupTreeNode } from 'stores/group-tree-node'
 const splitter = ref(400)
 
 const selectedGroup: Ref<GroupTreeNode | null> = ref(null)
-const variables: Ref<VariableSchema[]> = ref([])
-const inheritedVariables: Ref<{ [key: string]: VariableSchema[] }> = ref({})
+const variables: Ref<EnvironmentVariableMap> = ref(new Map())
+const inheritedVariables: Ref<MultiEnvironmentVariableMap> = ref(new Map())
 
 const groupStore = useGroupStore()
 const variableStore = useVariableStore()
@@ -44,7 +52,6 @@ async function nodeChanged(node: GroupTreeNode) {
   selectedGroup.value = node
 
   variables.value = await variableStore.getVariables(node)
-
-  const inheritedVariables = await variableStore.getInheritedVariables(node)
+  inheritedVariables.value = await variableStore.getInheritedVariables(node)
 }
 </script>
