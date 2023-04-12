@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { useGitlab } from 'src/api/gitlab'
 import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
 import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
-import { Ref, ref } from 'vue'
+import { Ref, computed, ref } from 'vue'
 import { useCache } from 'src/util/cache'
 import { parseNamespace } from 'src/util/gitlab'
 import { GroupTreeNode } from 'stores/group-tree-node'
@@ -44,10 +44,6 @@ export const useGroupStore = defineStore('groups', () => {
     }
 
     return results
-  }
-
-  function findNode(nodeId: string): GroupTreeNode | undefined {
-    return groupProjectMap.get(nodeId)
   }
 
   function findGroupByPath(root: GroupTreeNode, path: string[]) {
@@ -113,6 +109,6 @@ export const useGroupStore = defineStore('groups', () => {
     loadGroupsAndProjects,
     getNodesParents,
     groups,
-    groupTree,
+    groupTree: computed(() => groupTree.value),
   }
 })

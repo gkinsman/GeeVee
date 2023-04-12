@@ -7,10 +7,13 @@ import { useGroupStore } from 'stores/group-store'
 import { GroupTreeNode } from 'stores/group-tree-node'
 import { groupBy } from 'src/util/array'
 
-export type MultiEnvironmentVariableMap = Map<
-  string,
-  Map<string, VariableSchema[]>
->
+export interface VariableList {
+  variables: VariableSchema[]
+  name: string
+  order: number
+}
+
+export type MultiEnvironmentVariableMap = Map<string, VariableList[]>
 export type EnvironmentVariableMap = Map<string, VariableSchema[]>
 
 export const useVariableStore = defineStore('variables', () => {
@@ -27,18 +30,25 @@ export const useVariableStore = defineStore('variables', () => {
 
     const resultMap: MultiEnvironmentVariableMap = new Map()
 
-    const variableLoads = groups.map((g) =>
-      g.loader.load(async () => {
-        const varsByEnv = await getVariables(g)
+    const variableLoads = groups.map((group, idx) =>
+      group.loader.load(async () => {
+        const varsByEnv = await getVariables(group)
 
         for (const [env, vars] of varsByEnv) {
-          if (!resultMap.has(env)) resultMap.set(env, new Map())
-          resultMap.get(env)!.set(g.name, vars)
+          if (!resultMap.has(env)) resultMap.set(env, [])
+          const variableList: VariableList = {
+            variables: vars,
+            name: group.name,
+            order: idx,
+          }
+          resultMap.get(env)!.push(variableList)
         }
       })
     )
 
     await Promise.all(variableLoads)
+
+    resultMap.forEach((x) => x.sort((a, b) => a.order - b.order))
 
     return resultMap
   }
@@ -46,14 +56,17 @@ export const useVariableStore = defineStore('variables', () => {
   async function getVariables(
     node: GroupTreeNode
   ): Promise<EnvironmentVariableMap> {
-    let results = []
-    if (node.type === 'project') {
-      results = await getProjectVariables(node.projectInfo!.id)
-    } else {
-      results = await getGroupVariables(node.groupInfo!.id)
-    }
+    const result = await node.loader.load(async () => {
+      let results = []
+      if (node.type === 'project') {
+        results = await getProjectVariables(node.projectInfo!.id)
+      } else {
+        results = await getGroupVariables(node.groupInfo!.id)
+      }
+      return results
+    })
 
-    return groupBy(results, (x) => x.environment_scope || '')
+    return groupBy(result, (x) => x.environment_scope || '')
   }
 
   async function getGroupVariables(groupId: number): Promise<VariableSchema[]> {

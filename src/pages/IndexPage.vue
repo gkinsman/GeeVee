@@ -31,7 +31,6 @@ import {
   MultiEnvironmentVariableMap,
   useVariableStore,
 } from 'stores/variable-store'
-import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
 import VariablesViewer from 'components/VariablesViewer.vue'
 import { GroupTreeNode } from 'stores/group-tree-node'
 
