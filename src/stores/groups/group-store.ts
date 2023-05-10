@@ -5,7 +5,7 @@ import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
 import { Ref, computed, ref } from 'vue'
 import { useCache } from 'src/util/cache'
 import { parseNamespace } from 'src/util/gitlab'
-import { GroupTreeNode } from 'stores/group-tree-node'
+import { GroupTreeNode } from 'stores/groups/group-tree-node'
 
 export type GroupProjectMap = Map<string, GroupTreeNode>
 
@@ -108,6 +108,7 @@ export const useGroupStore = defineStore('groups', () => {
   return {
     loadGroupsAndProjects,
     getNodesParents,
+    projects,
     groups,
     groupTree: computed(() => groupTree.value),
   }

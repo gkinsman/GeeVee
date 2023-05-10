@@ -1,7 +1,7 @@
 ﻿import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
 import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
 import { Loader, useLoader } from 'src/util/loader'
-import { GroupProjectMap } from 'stores/group-store'
+import { GroupProjectMap } from 'stores/groups/group-store'
 
 export class GroupTreeNode {
   public id?: string

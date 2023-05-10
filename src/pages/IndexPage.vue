@@ -17,6 +17,14 @@
             :inherited-variables="inheritedVariables"
           ></variables-viewer>
         </div>
+
+        <q-inner-loading
+          :showing="loader.loading.value"
+          label="Please wait..."
+          label-class="text-teal"
+          label-style="font-size: 1.1em"
+        >
+        </q-inner-loading>
       </template>
     </q-splitter>
   </q-page>
@@ -24,21 +32,23 @@
 
 <script setup lang="ts">
 import GroupTree from 'src/components/GroupTree.vue'
-import { useGroupStore } from 'src/stores/group-store'
+import { useGroupStore } from 'src/stores/groups/group-store'
 import { Ref, ref } from 'vue'
 import {
   EnvironmentVariableMap,
   MultiEnvironmentVariableMap,
   useVariableStore,
-} from 'stores/variable-store'
+} from 'stores/variables/variable-store'
 import VariablesViewer from 'components/VariablesViewer.vue'
-import { GroupTreeNode } from 'stores/group-tree-node'
+import { GroupTreeNode } from 'stores/groups/group-tree-node'
+import { useLoader } from 'src/util/loader'
 
 const splitter = ref(400)
 
 const selectedGroup: Ref<GroupTreeNode | null> = ref(null)
 const variables: Ref<EnvironmentVariableMap> = ref(new Map())
 const inheritedVariables: Ref<MultiEnvironmentVariableMap> = ref(new Map())
+const loader = useLoader()
 
 const groupStore = useGroupStore()
 const variableStore = useVariableStore()
@@ -50,7 +60,9 @@ const groupTree = groupStore.groupTree
 async function nodeChanged(node: GroupTreeNode) {
   selectedGroup.value = node
 
-  variables.value = await variableStore.getVariables(node)
-  inheritedVariables.value = await variableStore.getInheritedVariables(node)
+  await loader.load(async () => {
+    variables.value = await variableStore.getVariables(node)
+    inheritedVariables.value = await variableStore.getInheritedVariables(node)
+  })
 }
 </script>

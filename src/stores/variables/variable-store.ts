@@ -1,10 +1,9 @@
 ﻿import { defineStore } from 'pinia'
-import { computed, Ref, ref } from 'vue'
+import { Ref, ref } from 'vue'
 import { useGitlab } from 'src/api/gitlab'
 import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
-import { useLoader } from 'src/util/loader'
-import { useGroupStore } from 'stores/group-store'
-import { GroupTreeNode } from 'stores/group-tree-node'
+import { useGroupStore } from 'stores/groups/group-store'
+import { GroupTreeNode } from 'stores/groups/group-tree-node'
 import { groupBy } from 'src/util/array'
 
 export interface VariableList {
@@ -19,8 +18,6 @@ export type EnvironmentVariableMap = Map<string, VariableSchema[]>
 export const useVariableStore = defineStore('variables', () => {
   const projectVariables: Ref<{ [key: number]: VariableSchema[] }> = ref({})
   const groupVariables: Ref<{ [key: number]: VariableSchema[] }> = ref({})
-
-  const loader = useLoader()
 
   async function getInheritedVariables(
     node: GroupTreeNode
@@ -57,13 +54,18 @@ export const useVariableStore = defineStore('variables', () => {
     node: GroupTreeNode
   ): Promise<EnvironmentVariableMap> {
     const result = await node.loader.load(async () => {
-      let results = []
-      if (node.type === 'project') {
-        results = await getProjectVariables(node.projectInfo!.id)
-      } else {
-        results = await getGroupVariables(node.groupInfo!.id)
+      try {
+        let results = []
+        if (node.type === 'project') {
+          results = await getProjectVariables(node.projectInfo!.id)
+        } else {
+          results = await getGroupVariables(node.groupInfo!.id)
+        }
+        return results
+      } catch (error) {
+        console.log(error)
+        return []
       }
-      return results
     })
 
     return groupBy(result, (x) => x.environment_scope || '')
@@ -91,7 +93,6 @@ export const useVariableStore = defineStore('variables', () => {
   }
 
   return {
-    loading: computed(() => loader.loading),
     getInheritedVariables,
     getVariables,
   }

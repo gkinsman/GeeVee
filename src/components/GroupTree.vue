@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { Ref, ref } from 'vue'
 import { QTree } from 'quasar'
-import { GroupTreeNode } from 'stores/group-tree-node'
+import { GroupTreeNode } from 'stores/groups/group-tree-node'
 
 const filter: Ref<string> = ref('')
 

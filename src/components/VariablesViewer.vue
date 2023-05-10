@@ -27,8 +27,8 @@
 import type {
   EnvironmentVariableMap,
   MultiEnvironmentVariableMap,
-} from 'stores/variable-store'
-import { GroupTreeNode } from 'stores/group-tree-node'
+} from 'stores/variables/variable-store'
+import { GroupTreeNode } from 'stores/groups/group-tree-node'
 import { computed } from 'vue'
 
 const props = defineProps<{
