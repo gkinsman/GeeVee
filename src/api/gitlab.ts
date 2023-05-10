@@ -3,7 +3,7 @@ import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
 import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
 import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
 
-const token = '***REMOVED***'
+const token = ''
 const api = new Gitlab({
   token,
 })
