@@ -19,8 +19,18 @@
           v-for="root in projectRoots.projectRoots"
           :key="root.id"
           :label="root.name"
-          :to="`/edit/${root.id}`"
-        ></q-btn>
+          :to="`/${root.id}`"
+        >
+          <q-btn
+            flat
+            icon="settings"
+            class="root-project-config q-mx-xs q-px-sm"
+            color="grey-5"
+            size="sm"
+            name="settings"
+            :to="`/edit/${root.id}`"
+          ></q-btn>
+        </q-btn>
         <q-btn stretch flat icon="add" to="/edit">Add Project Root</q-btn>
 
         <q-space />
@@ -38,3 +48,11 @@ import { useProjectRootStore } from 'stores/projectRoots/project-root-store'
 
 const { projectRoots } = useProjectRootStore()
 </script>
+
+<style scoped lang="scss">
+.root-project-config {
+  &.q-focus-helper:hover {
+    opacity: 0;
+  }
+}
+</style>

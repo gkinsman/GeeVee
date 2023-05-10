@@ -41,6 +41,7 @@
           ></q-input>
 
           <q-btn color="primary" label="Save" @click="save"></q-btn>
+          <q-btn color="negative" label="Delete" @click="remove"></q-btn>
         </q-form>
       </div>
     </div>
@@ -52,7 +53,8 @@ import {
   ProjectRoot,
   useProjectRootStore,
 } from 'stores/projectRoots/project-root-store'
-import { computed, ComputedRef, onMounted, Ref, ref, watch } from 'vue'
+import { computed, ComputedRef, Ref, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps<{ id: string }>()
 const projectRoot: Ref<ProjectRoot> = ref({
@@ -60,36 +62,51 @@ const projectRoot: Ref<ProjectRoot> = ref({
   name: '',
 })
 
-const { getProjectRoot, saveProjectRoot } = useProjectRootStore()
+const doesntExistMessage: Ref<string> = ref('')
+
+const { getProjectRoot, saveProjectRoot, deleteProjectRoot } =
+  useProjectRootStore()
+
+update()
 
 watch(
   () => props.id,
-  () => {
-    doesntExistMessage.value = ''
+  () => update()
+)
 
-    const loadedProjectRoot = getProjectRoot(props.id)
-    if (loadedProjectRoot) {
-      projectRoot.value = loadedProjectRoot
-    } else if (props.id?.length) {
-      doesntExistMessage.value = `Sorry that project root doesn't exist, do you want to`
-    } else {
-      projectRoot.value = {
-        apiKey: '',
-        name: '',
-      }
+function update() {
+  doesntExistMessage.value = ''
+
+  const loadedProjectRoot = getProjectRoot(props.id)
+  if (loadedProjectRoot) {
+    projectRoot.value = loadedProjectRoot
+  } else if (props.id?.length) {
+    doesntExistMessage.value =
+      "Sorry that project root doesn't exist, do you want to"
+  } else {
+    projectRoot.value = {
+      apiKey: '',
+      name: '',
     }
   }
-)
+}
+
+const router = useRouter()
 
 function save() {
   saveProjectRoot(projectRoot.value)
+  router.push(`/edit/${projectRoot.value.id}`)
 }
-const doesntExistMessage: Ref<string> = ref('')
+
+function remove() {
+  const newRootId = deleteProjectRoot(projectRoot.value)
+  router.push(`/edit/${newRootId}`)
+}
 
 type PageMode = 'Edit' | 'New'
 
 const mode: ComputedRef<PageMode> = computed(() =>
-  !!projectRoot.value.id ? 'Edit' : 'New'
+  !!props.id ? 'Edit' : 'New'
 )
 </script>
 

@@ -1,5 +1,4 @@
 ﻿import { defineStore } from 'pinia'
-import { useQuasar } from 'quasar'
 import { computed, Ref, ref } from 'vue'
 import shortid from 'shortid'
 import { useCache } from 'src/util/cache'
@@ -21,11 +20,26 @@ export const useProjectRootStore = defineStore('projectRoots', () => {
 
   const LocalStorageKey = 'project-roots'
 
+  const saveToCache = () =>
+    projectRootCache.saveToCache(projectRoots.value, LocalStorageKey)
+  const loadFromCache = () => projectRootCache.loadFromCache(LocalStorageKey)
+
   function loadProjectRoots() {
-    const roots = projectRootCache.loadFromCache(LocalStorageKey)
+    const roots = loadFromCache()
 
     if (roots) projectRoots.value = roots
     else projectRoots.value.projectRoots = []
+  }
+
+  function deleteProjectRoot(root: ProjectRoot): string {
+    let roots = projectRoots.value.projectRoots
+
+    const position: number = roots.findIndex((x) => x.id === root.id)
+    projectRoots.value.projectRoots = roots.filter((x) => x.id !== root.id)
+    saveToCache()
+
+    roots = projectRoots.value.projectRoots
+    return roots[position - 1]?.id || roots[position]?.id || roots[0]?.id || ''
   }
 
   function saveProjectRoot(root: ProjectRoot) {
@@ -41,7 +55,7 @@ export const useProjectRootStore = defineStore('projectRoots', () => {
       projectRoots.value.projectRoots.push(root)
     }
 
-    projectRootCache.saveToCache(projectRoots.value, LocalStorageKey)
+    saveToCache()
   }
 
   function getProjectRoot(id: string) {
@@ -52,6 +66,7 @@ export const useProjectRootStore = defineStore('projectRoots', () => {
     loadProjectRoots,
     saveProjectRoot,
     getProjectRoot,
+    deleteProjectRoot,
     projectRoots: computed(() => projectRoots.value),
   }
 })
