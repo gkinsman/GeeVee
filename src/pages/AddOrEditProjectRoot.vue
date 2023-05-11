@@ -60,6 +60,7 @@ const props = defineProps<{ id: string }>()
 const projectRoot: Ref<ProjectRoot> = ref({
   apiKey: '',
   name: '',
+  id: '',
 })
 
 const doesntExistMessage: Ref<string> = ref('')
@@ -87,6 +88,7 @@ function update() {
     projectRoot.value = {
       apiKey: '',
       name: '',
+      id: '',
     }
   }
 }

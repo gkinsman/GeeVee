@@ -4,7 +4,7 @@ import shortid from 'shortid'
 import { useCache } from 'src/util/cache'
 
 export interface ProjectRoot {
-  id?: string
+  id: string
   name: string
   apiKey: string
 }
@@ -58,7 +58,7 @@ export const useProjectRootStore = defineStore('projectRoots', () => {
     saveToCache()
   }
 
-  function getProjectRoot(id: string) {
+  function getProjectRoot(id?: string) {
     return projectRoots.value.projectRoots.find((x) => x.id === id)
   }
 

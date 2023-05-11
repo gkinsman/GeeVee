@@ -16,6 +16,10 @@
     return JSON.parse(json) as T
   }
 
+  function exists(key: string): boolean {
+    return !!localStorage.getItem(key)
+  }
+
   function saveToCache(item: T, key: string | null = null): void {
     const actualKey = key || keySelector?.(item)
     if (!actualKey)
@@ -25,5 +29,5 @@
     localStorage.setItem(actualKey, json)
   }
 
-  return { loadFromCache, saveToCache, loadOrSave }
+  return { loadFromCache, saveToCache, loadOrSave, exists }
 }

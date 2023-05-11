@@ -5,6 +5,7 @@ import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
 import { useGroupStore } from 'stores/groups/group-store'
 import { GroupTreeNode } from 'stores/groups/group-tree-node'
 import { groupBy } from 'src/util/array'
+import { ProjectRoot } from 'stores/projectRoots/project-root-store'
 
 export interface VariableList {
   variables: VariableSchema[]
@@ -20,10 +21,12 @@ export const useVariableStore = defineStore('variables', () => {
   const groupVariables: Ref<{ [key: number]: VariableSchema[] }> = ref({})
 
   async function getInheritedVariables(
+    projectRoot: ProjectRoot,
     node: GroupTreeNode
   ): Promise<MultiEnvironmentVariableMap> {
-    const { getNodesParents } = useGroupStore()
-    const groups = getNodesParents(node)
+    const { getRoot } = useGroupStore()
+    const root = getRoot(projectRoot)
+    const groups = root.getNodesParents(node)
 
     const resultMap: MultiEnvironmentVariableMap = new Map()
 
