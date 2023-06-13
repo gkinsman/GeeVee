@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { useGroupStore } from 'src/stores/groups/group-store'
-import { Ref, ref } from 'vue'
+import { computed, ComputedRef, Ref, ref, watch } from 'vue'
 import {
   EnvironmentVariableMap,
   MultiEnvironmentVariableMap,
@@ -46,7 +46,7 @@ import {
 import GroupTreeView from 'components/GroupTreeView.vue'
 
 const props = defineProps<{
-  root: ProjectRoot
+  root?: ProjectRoot
 }>()
 
 const splitter = ref(400)
@@ -59,12 +59,29 @@ const loader = useLoader()
 const groupStore = useGroupStore()
 const variableStore = useVariableStore()
 
-const root = useProjectRootStore().getProjectRoot(props.root.id)!
+const rootNode: Ref<ProjectRoot> = ref(null!)
+const groupTree: Ref<GroupTreeNode[]> = ref(null!)
 
-const groupStoreRoot = groupStore.getRoot(root)
-await groupStoreRoot.loadGroupsAndProjects()
+await updateRoot()
 
-const groupTree = groupStoreRoot.groupTree
+watch(
+  () => props.root,
+  async () => await updateRoot()
+)
+
+async function updateRoot() {
+  const root = useProjectRootStore().getProjectRoot(props.root?.id)
+  if (!root) return
+
+  rootNode.value = root
+
+  console.log(`Choosing root ${JSON.stringify(root)}`)
+
+  const groupStoreRoot = groupStore.getRoot(root)
+  await groupStoreRoot.loadGroupsAndProjects()
+
+  groupTree.value = groupStoreRoot.groupTree.value
+}
 
 async function nodeChanged(node: GroupTreeNode) {
   selectedGroup.value = node
@@ -72,7 +89,7 @@ async function nodeChanged(node: GroupTreeNode) {
   await loader.load(async () => {
     variables.value = await variableStore.getVariables(node)
     inheritedVariables.value = await variableStore.getInheritedVariables(
-      root,
+      rootNode.value,
       node
     )
   })

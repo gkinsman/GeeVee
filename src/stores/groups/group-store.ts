@@ -10,24 +10,24 @@ import { ProjectRoot } from 'stores/projectRoots/project-root-store'
 
 export type GroupProjectMap = Map<string, GroupTreeNode>
 
-interface ProjectRootStore {
+interface ProjectRootGroupStore {
   loadGroupsAndProjects(): Promise<void>
   getNodesParents(group: GroupTreeNode): GroupTreeNode[]
   projects: Ref<ProjectSchema[]>
   groups: Ref<GroupSchema[]>
-  groupTree: ComputedRef<GroupTreeNode[]>
+  groupTree: Ref<GroupTreeNode[]>
   isCached: () => boolean
 }
 
-export type ProjectRootMap = Map<string, ProjectRootStore>
+type ProjectRootMap = Map<string, ProjectRootGroupStore>
 
 export const useGroupStore = defineStore('groups', () => {
   const groupCache = useCache<GroupSchema[]>()
   const projectCache = useCache<ProjectSchema[]>()
 
-  const projectRoots: ProjectRootMap = new Map<string, ProjectRootStore>()
+  const projectRoots: ProjectRootMap = new Map<string, ProjectRootGroupStore>()
 
-  function getRoot(projectRoot: ProjectRoot): ProjectRootStore {
+  function getRoot(projectRoot: ProjectRoot): ProjectRootGroupStore {
     if (projectRoots.has(projectRoot.id)) {
       return projectRoots.get(projectRoot.id)!
     } else {
@@ -41,7 +41,7 @@ export const useGroupStore = defineStore('groups', () => {
     projectRoots.delete(projectRoot.id)
   }
 
-  function createProjectRoot(projectRoot: ProjectRoot): ProjectRootStore {
+  function createProjectRoot(projectRoot: ProjectRoot): ProjectRootGroupStore {
     const groups: Ref<GroupSchema[]> = ref([])
     const projects: Ref<ProjectSchema[]> = ref([])
     const groupTree: Ref<GroupTreeNode[]> = ref([])
@@ -49,8 +49,7 @@ export const useGroupStore = defineStore('groups', () => {
     const groupProjectMap: GroupProjectMap = new Map()
 
     async function loadGroupsAndProjects() {
-      const { listGroups } = useGitlab()
-      const { listProjects } = useGitlab()
+      const { listGroups, listProjects } = useGitlab(projectRoot)
 
       groups.value = await groupCache.loadOrSave(
         `root-${projectRoot.id}`,
@@ -147,9 +146,9 @@ export const useGroupStore = defineStore('groups', () => {
       projects,
       isCached,
       groups,
-      groupTree: computed(() => groupTree.value),
+      groupTree: groupTree,
     }
   }
 
-  return { createProjectRoot, getRoot, deleteRoot }
+  return { getRoot, deleteRoot }
 })

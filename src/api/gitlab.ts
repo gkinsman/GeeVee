@@ -2,13 +2,13 @@ import { Gitlab } from '@gitbeaker/browser'
 import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
 import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
 import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
+import { ProjectRoot } from 'stores/projectRoots/project-root-store'
 
-const token = ''
-const api = new Gitlab({
-  token,
-})
+export function useGitlab(projectRoot: ProjectRoot) {
+  const api = new Gitlab({
+    token: projectRoot.apiKey,
+  })
 
-export function useGitlab() {
   async function listGroups(): Promise<GroupSchema[]> {
     return await api.Groups.all()
   }
