@@ -3,13 +3,16 @@
     <div class="text-h3">{{ activeNode?.name }}</div>
 
     <q-card class="q-pa-md" :key="env" v-for="env of allEnvironments">
-      <div>
-        <span class="q-pr-md text-h6">{{ env }}</span>
-
-        <q-btn @click="viewRaw(env)">View Raw</q-btn>
+      <div class="row justify-between">
+        <div>
+          <span class="q-pr-md text-h6">{{ env }}</span>
+        </div>
+        <div>
+          <q-btn size="sm" outline @click="viewRaw(env)">View Raw</q-btn>
+        </div>
       </div>
       <div :key="v.key" v-for="v of varsForEnv(env)">
-        {{ v.key }}: {{ v.value }}
+        {{ v.key }}
       </div>
 
       <q-expansion-item
@@ -20,7 +23,7 @@
       >
         <q-item-section>
           <div :key="v.key" v-for="v of inherited.variables">
-            {{ v.key }}: {{ v.value }}
+            {{ v.key }}
           </div>
         </q-item-section>
       </q-expansion-item>
@@ -34,7 +37,7 @@
           {{ jsonData }}
         </q-card-section>
 
-        <q-card-actions align="right">
+        <q-card-actions>
           <q-btn
             @click="jsonData = ''"
             flat
@@ -74,12 +77,11 @@ const showJson = computed(() => !!jsonData.value)
 const jsonData = ref('')
 
 function viewRaw(env: string) {
-  const variables = props.variables.get(env)!
-  const inherited = props.inheritedVariables
-    .get(env)
-    ?.flatMap((v) => v.variables)
+  const variables = props.variables.get(env) || []
+  const inherited =
+    props.inheritedVariables.get(env)?.flatMap((v) => v.variables) || []
 
-  const allVars = [...variables, ...inherited!]
+  const allVars = [...variables, ...inherited]
 
   jsonData.value = JSON.stringify(allVars)
 }

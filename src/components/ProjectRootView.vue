@@ -1,4 +1,5 @@
-﻿<template>
+﻿<!-- eslint-disable @typescript-eslint/no-non-null-assertion -->
+<template>
   <q-splitter v-model="splitter" unit="px" class="absolute-full">
     <template v-slot:before>
       <div class="q-pa-md">
@@ -16,9 +17,8 @@
           :inherited-variables="inheritedVariables"
         ></variables-viewer>
       </div>
-
       <q-inner-loading
-        :showing="loader.loading.value"
+        :showing="variablesLoader.loading.value"
         label="Please wait..."
         label-class="text-teal"
         label-style="font-size: 1.1em"
@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import { useGroupStore } from 'src/stores/groups/group-store'
-import { computed, ComputedRef, Ref, ref, watch } from 'vue'
+import { Ref, ref, watch } from 'vue'
 import {
   EnvironmentVariableMap,
   MultiEnvironmentVariableMap,
@@ -50,16 +50,17 @@ const props = defineProps<{
 }>()
 
 const splitter = ref(400)
+const variablesLoader = useLoader()
+const treeLoader = useLoader()
 
 const selectedGroup: Ref<GroupTreeNode | null> = ref(null)
 const variables: Ref<EnvironmentVariableMap> = ref(new Map())
 const inheritedVariables: Ref<MultiEnvironmentVariableMap> = ref(new Map())
-const loader = useLoader()
 
 const groupStore = useGroupStore()
 const variableStore = useVariableStore()
 
-const rootNode: Ref<ProjectRoot> = ref(null!)
+const rootNode: Ref<ProjectRoot | undefined> = ref()
 const groupTree: Ref<GroupTreeNode[]> = ref(null!)
 
 await updateRoot()
@@ -75,17 +76,18 @@ async function updateRoot() {
 
   rootNode.value = root
 
-  const groupStoreRoot = groupStore.getRoot(root)
-  await groupStoreRoot.loadGroupsAndProjects()
-
-  groupTree.value = groupStoreRoot.groupTree.value
+  await variablesLoader.load(async () => {
+    const groupStoreRoot = groupStore.getRoot(root)
+    await groupStoreRoot.loadGroupsAndProjects()
+    groupTree.value = groupStoreRoot.groupTree.value
+  })
 }
 
 async function nodeChanged(node: GroupTreeNode) {
   selectedGroup.value = node
 
-  await loader.load(async () => {
-    var rootStore = variableStore.getRootStore(rootNode.value)
+  await variablesLoader.load(async () => {
+    var rootStore = variableStore.getRootStore(rootNode.value!)
     variables.value = await rootStore.getVariables(node)
     inheritedVariables.value = await rootStore.getInheritedVariables(node)
   })

@@ -97,6 +97,8 @@ export const useVariableStore = defineStore('variables', () => {
           }
         })
 
+        if (!result) return new Map()
+
         return groupBy(result, (x) => x.environment_scope || '')
       }
 
