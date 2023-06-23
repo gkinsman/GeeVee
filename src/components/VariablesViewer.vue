@@ -1,10 +1,15 @@
 ﻿<template>
   <div class="q-gutter-md">
     <div class="text-h3">{{ activeNode?.name }}</div>
+
     <q-card class="q-pa-md" :key="env" v-for="env of allEnvironments">
-      <span class="text-h6">{{ env }}</span>
+      <div>
+        <span class="q-pr-md text-h6">{{ env }}</span>
+
+        <q-btn @click="viewRaw(env)">View Raw</q-btn>
+      </div>
       <div :key="v.key" v-for="v of varsForEnv(env)">
-        {{ v.key }}
+        {{ v.key }}: {{ v.value }}
       </div>
 
       <q-expansion-item
@@ -15,11 +20,31 @@
       >
         <q-item-section>
           <div :key="v.key" v-for="v of inherited.variables">
-            {{ v.key }}
+            {{ v.key }}: {{ v.value }}
           </div>
         </q-item-section>
       </q-expansion-item>
     </q-card>
+
+    <q-dialog v-model="showJson">
+      <q-card>
+        <q-card-section> </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          {{ jsonData }}
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn
+            @click="jsonData = ''"
+            flat
+            label="OK"
+            color="primary"
+            v-close-popup
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -29,7 +54,7 @@ import type {
   MultiEnvironmentVariableMap,
 } from 'stores/variables/variable-store'
 import { GroupTreeNode } from 'stores/groups/group-tree-node'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   activeNode: GroupTreeNode | null
@@ -44,6 +69,20 @@ const allEnvironments = computed(() => {
     )
   )
 })
+
+const showJson = computed(() => !!jsonData.value)
+const jsonData = ref('')
+
+function viewRaw(env: string) {
+  const variables = props.variables.get(env)!
+  const inherited = props.inheritedVariables
+    .get(env)
+    ?.flatMap((v) => v.variables)
+
+  const allVars = [...variables, ...inherited!]
+
+  jsonData.value = JSON.stringify(allVars)
+}
 
 function varsForEnv(env: string) {
   return props.variables.get(env)

@@ -1,7 +1,7 @@
 ﻿import { defineStore } from 'pinia'
 import { computed, Ref, ref } from 'vue'
-import shortid from 'shortid'
 import { useCache } from 'src/util/cache'
+import shortid from 'shortid'
 
 export interface ProjectRoot {
   id: string

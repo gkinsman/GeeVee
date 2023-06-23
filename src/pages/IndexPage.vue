@@ -3,14 +3,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import ProjectRootView from 'components/ProjectRootView.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjectRootStore } from 'stores/projectRoots/project-root-store'
 
-const id = useRoute().params.id as string
-const root = ref(useProjectRootStore().getProjectRoot(id))
+const route = useRoute()
+const root = ref()
+
+watch(
+  () => route.params.id,
+  (id) => {
+    root.value = useProjectRootStore().getProjectRoot(id as string)
+  },
+  { immediate: true }
+)
 
 if (!root.value) {
   await useRouter().push('/edit')

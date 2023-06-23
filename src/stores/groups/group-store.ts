@@ -27,7 +27,7 @@ export const useGroupStore = defineStore('groups', () => {
 
   const projectRoots: ProjectRootMap = new Map<string, ProjectRootGroupStore>()
 
-  function getRoot(projectRoot: ProjectRoot): ProjectRootGroupStore {
+  function getOrCreateRoot(projectRoot: ProjectRoot): ProjectRootGroupStore {
     if (projectRoots.has(projectRoot.id)) {
       return projectRoots.get(projectRoot.id)!
     } else {
@@ -150,5 +150,5 @@ export const useGroupStore = defineStore('groups', () => {
     }
   }
 
-  return { getRoot, deleteRoot }
+  return { getRoot: getOrCreateRoot, deleteRoot }
 })

@@ -75,8 +75,6 @@ async function updateRoot() {
 
   rootNode.value = root
 
-  console.log(`Choosing root ${JSON.stringify(root)}`)
-
   const groupStoreRoot = groupStore.getRoot(root)
   await groupStoreRoot.loadGroupsAndProjects()
 
@@ -87,11 +85,9 @@ async function nodeChanged(node: GroupTreeNode) {
   selectedGroup.value = node
 
   await loader.load(async () => {
-    variables.value = await variableStore.getVariables(node)
-    inheritedVariables.value = await variableStore.getInheritedVariables(
-      rootNode.value,
-      node
-    )
+    var rootStore = variableStore.getRootStore(rootNode.value)
+    variables.value = await rootStore.getVariables(node)
+    inheritedVariables.value = await rootStore.getInheritedVariables(node)
   })
 }
 </script>

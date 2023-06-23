@@ -1,4 +1,5 @@
-﻿import { defineStore } from 'pinia'
+﻿/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { defineStore } from 'pinia'
 import { Ref, ref } from 'vue'
 import { useGitlab } from 'src/api/gitlab'
 import { VariableSchema } from '@gitbeaker/core/dist/types/templates/types'
@@ -32,7 +33,9 @@ export const useVariableStore = defineStore('variables', () => {
     ProjectRootVariableStore
   >()
 
-  function getRoot(projectRoot: ProjectRoot) {
+  return { getRootStore: getRootStore }
+
+  function getRootStore(projectRoot: ProjectRoot): ProjectRootVariableStore {
     if (projectRoots.has(projectRoot.id)) {
       return projectRoots.get(projectRoot.id)!
     } else {
@@ -69,7 +72,7 @@ export const useVariableStore = defineStore('variables', () => {
                 name: group.name,
                 order: idx,
               }
-              resultMap.get(env)!.push(variableList)
+              resultMap.get(env)?.push(variableList)
             }
           })
         )
@@ -85,16 +88,11 @@ export const useVariableStore = defineStore('variables', () => {
         node: GroupTreeNode
       ): Promise<EnvironmentVariableMap> {
         const result = await node.loader.load(async () => {
-          try {
-            let results = []
-            if (node.type === 'project') {
-              results = await getProjectVariables(node.projectInfo!.id)
-            } else {
-              results = await getGroupVariables(node.groupInfo!.id)
-            }
-            return results
-          } catch (error) {
-            console.log(error)
+          if (node.type === 'project' && node.projectInfo) {
+            return await getProjectVariables(node.projectInfo.id)
+          } else if (node.type === 'group' && node.groupInfo) {
+            return await getGroupVariables(node.groupInfo.id)
+          } else {
             return []
           }
         })
