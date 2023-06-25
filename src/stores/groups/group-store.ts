@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { defineStore } from 'pinia'
 import { useGitlab } from 'src/api/gitlab'
 import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
@@ -13,6 +14,7 @@ export type GroupProjectMap = Map<string, GroupTreeNode>
 interface ProjectRootGroupStore {
   loadGroupsAndProjects(): Promise<void>
   getNodesParents(group: GroupTreeNode): GroupTreeNode[]
+  clear(): void
   projects: Ref<ProjectSchema[]>
   groups: Ref<GroupSchema[]>
   groupTree: Ref<GroupTreeNode[]>
@@ -20,6 +22,9 @@ interface ProjectRootGroupStore {
 }
 
 type ProjectRootMap = Map<string, ProjectRootGroupStore>
+
+const groupCacheKey = (root: ProjectRoot) => `groups-${root.id}`
+const projectCacheKey = (root: ProjectRoot) => `projects-${root.id}`
 
 export const useGroupStore = defineStore('groups', () => {
   const groupCache = useCache<GroupSchema[]>()
@@ -37,7 +42,15 @@ export const useGroupStore = defineStore('groups', () => {
     }
   }
 
+  function clearRoot(projectRoot: ProjectRoot) {
+    groupCache.remove(groupCacheKey(projectRoot))
+    groupCache.remove(projectCacheKey(projectRoot))
+
+    getOrCreateRoot(projectRoot).clear()
+  }
+
   function deleteRoot(projectRoot: ProjectRoot) {
+    clearRoot(projectRoot)
     projectRoots.delete(projectRoot.id)
   }
 
@@ -51,18 +64,32 @@ export const useGroupStore = defineStore('groups', () => {
     async function loadGroupsAndProjects() {
       const { listGroups, listProjects } = useGitlab(projectRoot)
 
+      if (
+        groups.value.length ||
+        projects.value.length ||
+        groupTree.value.length
+      ) {
+        return
+      }
+
       groups.value = await groupCache.loadOrSave(
-        `root-${projectRoot.id}`,
+        groupCacheKey(projectRoot),
         listGroups
       )
       groupTree.value = createTree(groups.value)
 
       projects.value = await projectCache.loadOrSave(
-        `projects-${projectRoot.id}`,
+        projectCacheKey(projectRoot),
         async () => await listProjects(groupTree.value[0].groupInfo!.id)
       )
 
       populateTreeWithProjects()
+    }
+
+    function clear() {
+      groups.value = []
+      groupTree.value = []
+      projects.value = []
     }
 
     function getNodesParents(group: GroupTreeNode): GroupTreeNode[] {
@@ -146,9 +173,10 @@ export const useGroupStore = defineStore('groups', () => {
       projects,
       isCached,
       groups,
-      groupTree: groupTree,
+      groupTree,
+      clear,
     }
   }
 
-  return { getRoot: getOrCreateRoot, deleteRoot }
+  return { getRoot: getOrCreateRoot, deleteRoot, clearRoot }
 })

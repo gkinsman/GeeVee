@@ -20,6 +20,10 @@
     return !!localStorage.getItem(key)
   }
 
+  function remove(key: string) {
+    localStorage.removeItem(key)
+  }
+
   function saveToCache(item: T, key: string | null = null): void {
     const actualKey = key || keySelector?.(item)
     if (!actualKey)
@@ -29,5 +33,5 @@
     localStorage.setItem(actualKey, json)
   }
 
-  return { loadFromCache, saveToCache, loadOrSave, exists }
+  return { loadFromCache, saveToCache, loadOrSave, exists, remove }
 }

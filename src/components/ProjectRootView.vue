@@ -1,12 +1,19 @@
-﻿<!-- eslint-disable @typescript-eslint/no-non-null-assertion -->
-<template>
+﻿<template>
   <q-splitter v-model="splitter" unit="px" class="absolute-full">
     <template v-slot:before>
       <div class="q-pa-md">
         <group-tree-view
-          @selectionChanged="nodeChanged"
+          @selectionChanged="nodeSelected"
+          @refresh="refresh"
           :group-tree="groupTree"
         ></group-tree-view>
+        <q-inner-loading
+          :showing="treeLoader.loading.value"
+          label="Please wait..."
+          label-class="text-teal"
+          label-style="font-size: 1.1em"
+        >
+        </q-inner-loading>
       </div>
     </template>
     <template v-slot:after>
@@ -76,20 +83,31 @@ async function updateRoot() {
 
   rootNode.value = root
 
-  await variablesLoader.load(async () => {
-    const groupStoreRoot = groupStore.getRoot(root)
-    await groupStoreRoot.loadGroupsAndProjects()
-    groupTree.value = groupStoreRoot.groupTree.value
-  })
+  await load()
 }
 
-async function nodeChanged(node: GroupTreeNode) {
+async function nodeSelected(node: GroupTreeNode) {
   selectedGroup.value = node
 
   await variablesLoader.load(async () => {
     var rootStore = variableStore.getRootStore(rootNode.value!)
     variables.value = await rootStore.getVariables(node)
     inheritedVariables.value = await rootStore.getInheritedVariables(node)
+  })
+}
+
+async function refresh() {
+  groupStore.clearRoot(rootNode.value!)
+  await load()
+}
+
+async function load() {
+  await treeLoader.load(async () => {
+    const groupStoreRoot = groupStore.getRoot(rootNode.value!)
+
+    await groupStoreRoot.loadGroupsAndProjects()
+
+    groupTree.value = groupStoreRoot.groupTree.value
   })
 }
 </script>

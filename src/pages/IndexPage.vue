@@ -1,5 +1,7 @@
 <template>
-  <q-page class=""> <project-root-view v-if="root" :root="root" /></q-page>
+  <q-page class="">
+    <project-root-view v-if="root" :root="root" />
+  </q-page>
 </template>
 
 <script setup lang="ts">

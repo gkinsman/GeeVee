@@ -20,7 +20,7 @@
       class=""
       dense
       ref="treeRef"
-      :nodes="props.groupTree"
+      :nodes="props.groupTree || []"
       :filter="filter"
       node-key="id"
       children-key="children"
@@ -59,7 +59,7 @@ const treeRef: Ref<QTree> = ref(null!)
 const selected: Ref<GroupTreeNode | null> = ref(null)
 
 const props = defineProps<{
-  groupTree: GroupTreeNode[]
+  groupTree: GroupTreeNode[] | null
 }>()
 
 const emit = defineEmits<{

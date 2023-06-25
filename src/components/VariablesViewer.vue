@@ -11,9 +11,11 @@
           <q-btn size="sm" outline @click="viewRaw(env)">View Raw</q-btn>
         </div>
       </div>
-      <div :key="v.key" v-for="v of varsForEnv(env)">
-        {{ v.key }}
-      </div>
+      <variable-view
+        :variable="v"
+        :key="v.key"
+        v-for="v of varsForEnv(env)"
+      ></variable-view>
 
       <q-expansion-item
         :key="inherited.name"
@@ -21,10 +23,12 @@
         v-for="inherited of inheritedForEnv(env)"
         :caption="inherited.variables.length + ' inherited variables'"
       >
-        <q-item-section>
-          <div :key="v.key" v-for="v of inherited.variables">
-            {{ v.key }}
-          </div>
+        <q-item-section class="q-pl-sm">
+          <variable-view
+            :variable="v"
+            :key="v.key"
+            v-for="v of inherited.variables"
+          ></variable-view>
         </q-item-section>
       </q-expansion-item>
     </q-card>
@@ -58,6 +62,7 @@ import type {
 } from 'stores/variables/variable-store'
 import { GroupTreeNode } from 'stores/groups/group-tree-node'
 import { computed, ref } from 'vue'
+import VariableView from './VariableView.vue'
 
 const props = defineProps<{
   activeNode: GroupTreeNode | null
@@ -95,4 +100,8 @@ function inheritedForEnv(env: string) {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.q-expansion-item--expanded {
+  border-left: 2px solid grey;
+}
+</style>
