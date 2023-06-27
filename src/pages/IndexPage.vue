@@ -1,5 +1,5 @@
 <template>
-  <q-page class="">
+  <q-page>
     <project-root-view v-if="root" :root="root" />
   </q-page>
 </template>
