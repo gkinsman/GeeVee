@@ -1,6 +1,8 @@
 # Geevee (geevee)
 
-A GitLab variable viewer
+[Live Here](https://geevee.netlify.app/)
+
+A GitLab project and variable viewer
 
 ## Install the dependencies
 ```bash
