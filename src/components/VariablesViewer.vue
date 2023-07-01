@@ -1,8 +1,6 @@
 ﻿<template>
-  <div class="q-gutter-md">
-    <div class="text-h3">{{ activeNode?.name }}</div>
-
-    <q-card class="q-pa-md" :key="env" v-for="env of allEnvironments">
+  <div>
+    <q-card class="q-pa-md q-my-md" :key="env" v-for="env of allEnvironments">
       <div class="row justify-between">
         <div>
           <span class="q-pr-md text-h6">{{ env }}</span>

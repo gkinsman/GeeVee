@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref } from 'vue'
+import { Ref, ref, watch } from 'vue'
 import { QTree } from 'quasar'
 import { GroupTreeNode } from 'stores/groups/group-tree-node'
 
@@ -59,13 +59,17 @@ const treeRef: Ref<QTree> = ref(null!)
 const selected: Ref<GroupTreeNode | null> = ref(null)
 
 const props = defineProps<{
-  groupTree: GroupTreeNode[] | null
+  groupTree: GroupTreeNode[] | undefined
 }>()
 
 const emit = defineEmits<{
   (e: 'selection-changed', node: GroupTreeNode): void
   (e: 'refresh'): void
 }>()
+
+watch(props.groupTree ?? {}, (_, __) => {
+  treeRef.value.expandAll()
+})
 
 function getNodeIcon(node: GroupTreeNode): [string, string] {
   if (node.loader.failure) return ['red', 'cancel']

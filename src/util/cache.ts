@@ -1,7 +1,9 @@
 ﻿export const useCache = function <T>(
   keySelector: ((item: T) => string) | null = null
 ) {
-  async function loadOrSave(key: string, loader: () => Promise<T>): Promise<T> {
+  async function loadOrSave(key: string,
+    loader: () => Promise<T>,
+  ): Promise<T | undefined> {
     const fromCache = loadFromCache(key)
     if (fromCache) return fromCache
 

@@ -17,8 +17,24 @@
       </div>
     </template>
     <template v-slot:after>
-      <div class="q-pa-md">
+      <div class="q-pa-md q-gutter-md">
+        <div class="text-h3">{{ selectedGroup?.name }}</div>
+
+        <q-banner v-if="loadFailures.length" class="error-banner shadow-2">
+          <span
+            class="text-weight-medium"
+            :key="failure?.id"
+            v-for="failure of loadFailures"
+          >
+            {{ selectedGroup?.loader.failure }}
+          </span>
+          <span :key="failure?.id" v-for="failure of loadFailures">{{
+            failure?.description
+          }}</span>
+        </q-banner>
+
         <variables-viewer
+          v-if="variables && inheritedVariables"
           :activeNode="selectedGroup"
           :variables="variables"
           :inherited-variables="inheritedVariables"
@@ -37,7 +53,7 @@
 
 <script setup lang="ts">
 import { useGroupStore } from 'src/stores/groups/group-store'
-import { Ref, ref, watch } from 'vue'
+import { Ref, computed, onMounted, ref, watch } from 'vue'
 import {
   EnvironmentVariableMap,
   MultiEnvironmentVariableMap,
@@ -61,55 +77,84 @@ const variablesLoader = useLoader()
 const treeLoader = useLoader()
 
 const selectedGroup: Ref<GroupTreeNode | null> = ref(null)
-const variables: Ref<EnvironmentVariableMap> = ref(new Map())
-const inheritedVariables: Ref<MultiEnvironmentVariableMap> = ref(new Map())
+
+const variables: Ref<EnvironmentVariableMap | null> = ref(null)
+const inheritedVariables: Ref<MultiEnvironmentVariableMap | null> = ref(null)
 
 const groupStore = useGroupStore()
 const variableStore = useVariableStore()
 
-const rootNode: Ref<ProjectRoot | undefined> = ref()
-const groupTree: Ref<GroupTreeNode[]> = ref(null!)
-
-await updateRoot()
+const rootGroup = computed(() => groupStore.getOrCreateRoot(props.root))
+const groupTree = computed(() => rootGroup.value?.groupTree)
+const loadFailures = computed(() =>
+  [
+    selectedGroup?.value?.loader.failure?.value,
+    ...(rootGroup.value?.loadFailures || []),
+  ].filter((x) => !!x)
+)
 
 watch(
   () => props.root,
   async () => await updateRoot()
 )
 
+onMounted(updateRoot)
+
 async function updateRoot() {
   const root = useProjectRootStore().getProjectRoot(props.root?.id)
   if (!root) return
 
-  rootNode.value = root
-
+  selectedGroup.value = null
+  resetVariables()
   await load()
 }
-
+// TODO: need to show failures from rootStore variable somehow - computed?
 async function nodeSelected(node: GroupTreeNode) {
-  selectedGroup.value = node
+  resetVariables()
+  await loadNodeVariables(node)
+}
 
-  await variablesLoader.load(async () => {
-    var rootStore = variableStore.getRootStore(rootNode.value!)
-    variables.value = await rootStore.getVariables(node)
-    inheritedVariables.value = await rootStore.getInheritedVariables(node)
-  })
+async function loadNodeVariables(node: GroupTreeNode) {
+  selectedGroup.value = node
+  try {
+    await variablesLoader.load(async () => {
+      const rootStore = variableStore.getRootStore(props.root)
+      if (!rootStore) return
+
+      const getInherited = rootStore.getInheritedVariables(node)
+      const getVariables = rootStore.getVariables(node)
+
+      await Promise.all([getInherited, getVariables])
+
+      inheritedVariables.value = await getInherited
+      variables.value = await getVariables
+    })
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+function resetVariables() {
+  selectedGroup.value = null
+  variables.value = null
+  inheritedVariables.value = null
 }
 
 async function refresh() {
-  groupStore.clearRoot(rootNode.value!)
+  if (props.root) groupStore.clearRoot(props.root)
   await load()
 }
 
 async function load() {
+  if (!rootGroup.value) return
   await treeLoader.load(async () => {
-    const groupStoreRoot = groupStore.getRoot(rootNode.value!)
-
-    await groupStoreRoot.loadGroupsAndProjects()
-
-    groupTree.value = groupStoreRoot.groupTree.value
+    await rootGroup.value?.loadGroupsAndProjects()
   })
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.error-banner {
+  border-left: 5px solid red;
+}
+</style>

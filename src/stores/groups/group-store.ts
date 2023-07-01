@@ -3,22 +3,22 @@ import { defineStore } from 'pinia'
 import { useGitlab } from 'src/api/gitlab'
 import { GroupSchema } from '@gitbeaker/core/dist/types/resources/Groups'
 import { ProjectSchema } from '@gitbeaker/core/dist/types/resources/Projects'
-import { Ref, ref } from 'vue'
+import { reactive } from 'vue'
 import { useCache } from 'src/util/cache'
 import { parseNamespace } from 'src/util/gitlab'
 import { GroupTreeNode } from 'stores/groups/group-tree-node'
 import { ProjectRoot } from 'stores/projectRoots/project-root-store'
+import { LoadFailure } from 'src/util/loader'
 
 export type GroupProjectMap = Map<string, GroupTreeNode>
 
 interface ProjectRootGroupStore {
   loadGroupsAndProjects(): Promise<void>
   getNodesParents(group: GroupTreeNode): GroupTreeNode[]
-  clear(): void
-  projects: Ref<ProjectSchema[]>
-  groups: Ref<GroupSchema[]>
-  groupTree: Ref<GroupTreeNode[]>
   isCached: () => boolean
+  clear(): void
+  loadFailures: LoadFailure[]
+  groupTree: GroupTreeNode[]
 }
 
 type ProjectRootMap = Map<string, ProjectRootGroupStore>
@@ -32,7 +32,10 @@ export const useGroupStore = defineStore('groups', () => {
 
   const projectRoots: ProjectRootMap = new Map<string, ProjectRootGroupStore>()
 
-  function getOrCreateRoot(projectRoot: ProjectRoot): ProjectRootGroupStore {
+  function getOrCreateRoot(
+    projectRoot?: ProjectRoot
+  ): ProjectRootGroupStore | undefined {
+    if (!projectRoot) return
     if (projectRoots.has(projectRoot.id)) {
       return projectRoots.get(projectRoot.id)!
     } else {
@@ -46,7 +49,7 @@ export const useGroupStore = defineStore('groups', () => {
     groupCache.remove(groupCacheKey(projectRoot))
     groupCache.remove(projectCacheKey(projectRoot))
 
-    getOrCreateRoot(projectRoot).clear()
+    getOrCreateRoot(projectRoot)?.clear()
   }
 
   function deleteRoot(projectRoot: ProjectRoot) {
@@ -55,41 +58,62 @@ export const useGroupStore = defineStore('groups', () => {
   }
 
   function createProjectRoot(projectRoot: ProjectRoot): ProjectRootGroupStore {
-    const groups: Ref<GroupSchema[]> = ref([])
-    const projects: Ref<ProjectSchema[]> = ref([])
-    const groupTree: Ref<GroupTreeNode[]> = ref([])
+    const groups: GroupSchema[] = reactive([])
+    const projects: ProjectSchema[] = reactive([])
+    const groupTree: GroupTreeNode[] = reactive([])
+    const loadFailures: LoadFailure[] = reactive([])
 
     const groupProjectMap: GroupProjectMap = new Map()
 
     async function loadGroupsAndProjects() {
       const { listGroups, listProjects } = useGitlab(projectRoot)
 
-      if (
-        groups.value.length ||
-        projects.value.length ||
-        groupTree.value.length
-      ) {
+      if (groups?.length || projects?.length || groupTree?.length) {
         return
       }
 
-      groups.value = await groupCache.loadOrSave(
-        groupCacheKey(projectRoot),
-        listGroups
-      )
-      groupTree.value = createTree(groups.value)
+      loadFailures.splice(0)
+      try {
+        const loadedGroups = await groupCache.loadOrSave(
+          groupCacheKey(projectRoot),
+          listGroups
+        )
+        Object.assign(groups, loadedGroups)
+        if (!groups.length) return
 
-      projects.value = await projectCache.loadOrSave(
-        projectCacheKey(projectRoot),
-        async () => await listProjects(groupTree.value[0].groupInfo!.id)
-      )
+        Object.assign(groupTree, createTree(groups))
+        if (!groupTree) return
+      } catch (error) {
+        loadFailures.push({
+          id: `groups-${projectRoot.id}`,
+          description: error.description ?? 'Unknown',
+        })
+      }
+
+      const rootGroupId = groupTree[0].groupInfo!.id // TODO: move this to root config
+
+      try {
+        const loadedProjects = await projectCache.loadOrSave(
+          projectCacheKey(projectRoot),
+          async () => await listProjects(rootGroupId)
+        )
+        Object.assign(projects, loadedProjects)
+      } catch (error) {
+        loadFailures.push({
+          id: `projects-${projectRoot.id}`,
+          description: JSON.stringify(error),
+        })
+      }
+
+      if (loadFailures.length) return
 
       populateTreeWithProjects()
     }
 
     function clear() {
-      groups.value = []
-      groupTree.value = []
-      projects.value = []
+      groups.splice(0)
+      groupTree.splice(0)
+      projects.splice(0)
     }
 
     function getNodesParents(group: GroupTreeNode): GroupTreeNode[] {
@@ -118,8 +142,9 @@ export const useGroupStore = defineStore('groups', () => {
     }
 
     function populateTreeWithProjects() {
-      for (const root of groupTree.value) {
-        for (const proj of projects.value) {
+      if (!groupTree || !projects) return
+      for (const root of groupTree) {
+        for (const proj of projects) {
           const path = parseNamespace(proj.namespace.full_path)
           const group = findGroupByPath(root, path)
 
@@ -170,13 +195,12 @@ export const useGroupStore = defineStore('groups', () => {
     return {
       loadGroupsAndProjects,
       getNodesParents,
-      projects,
       isCached,
-      groups,
       groupTree,
       clear,
+      loadFailures,
     }
   }
 
-  return { getRoot: getOrCreateRoot, deleteRoot, clearRoot }
+  return { getOrCreateRoot, deleteRoot, clearRoot }
 })

@@ -15,7 +15,6 @@ interface ProjectRootCollection {
 
 export const useProjectRootStore = defineStore('projectRoots', () => {
   const projectRootCache = useCache<ProjectRootCollection>()
-
   const projectRoots: Ref<ProjectRootCollection> = ref({ projectRoots: [] })
 
   const LocalStorageKey = 'project-roots'

@@ -33,9 +33,11 @@ export const useVariableStore = defineStore('variables', () => {
     ProjectRootVariableStore
   >()
 
-  return { getRootStore: getRootStore }
+  return { getRootStore }
 
-  function getRootStore(projectRoot: ProjectRoot): ProjectRootVariableStore {
+  function getRootStore(projectRoot?: ProjectRoot): ProjectRootVariableStore | undefined {
+    if (!projectRoot) return
+
     if (projectRoots.has(projectRoot.id)) {
       return projectRoots.get(projectRoot.id)!
     } else {
@@ -55,21 +57,21 @@ export const useVariableStore = defineStore('variables', () => {
       async function getInheritedVariables(
         node: GroupTreeNode
       ): Promise<MultiEnvironmentVariableMap> {
-        const { getRoot } = useGroupStore()
-        const root = getRoot(projectRoot)
-        const groups = root.getNodesParents(node)
+        const { getOrCreateRoot } = useGroupStore()
+        const root = getOrCreateRoot(projectRoot)
+        const parentsToLoad = root?.getNodesParents(node)
 
         const resultMap: MultiEnvironmentVariableMap = new Map()
 
-        const variableLoads = groups.map((group, idx) =>
-          group.loader.load(async () => {
-            const varsByEnv = await getVariables(group)
+        const variableLoads = parentsToLoad?.map(async (node, idx) =>
+          await node.loader.load(async () => {
+            const varsByEnv = await getVariables(node)
 
             for (const [env, vars] of varsByEnv) {
               if (!resultMap.has(env)) resultMap.set(env, [])
               const variableList: VariableList = {
                 variables: vars,
-                name: group.name,
+                name: node.name,
                 order: idx,
               }
               resultMap.get(env)?.push(variableList)
@@ -77,7 +79,7 @@ export const useVariableStore = defineStore('variables', () => {
           })
         )
 
-        await Promise.all(variableLoads)
+        await Promise.all(variableLoads || [])
 
         resultMap.forEach((x) => x.sort((a, b) => a.order - b.order))
 

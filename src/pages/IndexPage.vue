@@ -17,7 +17,9 @@ const root = ref()
 watch(
   () => route.params.id,
   (id) => {
-    root.value = useProjectRootStore().getProjectRoot(id as string)
+    const loadedRoot = useProjectRootStore().getProjectRoot(id as string)
+    if (!loadedRoot) return
+    root.value = loadedRoot
   },
   { immediate: true }
 )
