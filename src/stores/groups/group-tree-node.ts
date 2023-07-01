@@ -6,7 +6,7 @@ import { GroupProjectMap } from 'stores/groups/group-store'
 export class GroupTreeNode {
   public id?: string
   public children: GroupTreeNode[] = []
-  public loader: Loader = useLoader()
+  public loader: Loader
 
   public groupInfo?: GroupSchema
   public projectInfo?: ProjectSchema
@@ -16,7 +16,9 @@ export class GroupTreeNode {
     return 'project'
   }
 
-  constructor(public name: string, public parent?: GroupTreeNode) {}
+  constructor(public name: string, public parent?: GroupTreeNode) {
+    this.loader = useLoader()
+  }
 
   getOrAdd(name: string): GroupTreeNode {
     if (this.name === name) return this

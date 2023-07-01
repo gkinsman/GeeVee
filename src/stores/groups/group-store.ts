@@ -78,10 +78,12 @@ export const useGroupStore = defineStore('groups', () => {
           groupCacheKey(projectRoot),
           listGroups
         )
-        Object.assign(groups, loadedGroups)
+        groups.splice(0)
+        groups.push(...(loadedGroups || []))
         if (!groups.length) return
 
-        Object.assign(groupTree, createTree(groups))
+        groupTree.splice(0)
+        groupTree.push(...createTree(groups))
         if (!groupTree) return
       } catch (error) {
         loadFailures.push({
@@ -90,7 +92,10 @@ export const useGroupStore = defineStore('groups', () => {
         })
       }
 
-      const rootGroupId = groupTree[0].groupInfo!.id // TODO: move this to root config
+      const firstGroup = groupTree[0]
+      const rootGroupId = firstGroup?.groupInfo!.id // TODO: move this to root config
+
+      if (loadFailures.length) return
 
       try {
         const loadedProjects = await projectCache.loadOrSave(

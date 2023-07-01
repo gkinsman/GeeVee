@@ -1,4 +1,4 @@
-﻿import { computed, ref, Ref } from 'vue'
+﻿import { computed, ComputedRef, reactive } from 'vue'
 
 export interface LoadFailure {
   id: string
@@ -6,31 +6,34 @@ export interface LoadFailure {
 }
 
 export interface Loader {
-  loading: Ref<boolean>
-  loaded: Ref<boolean>
+  loading: ComputedRef<boolean>
+  loaded: ComputedRef<boolean>
+  failure: ComputedRef<LoadFailure | null>
   load<T>(func: () => Promise<T>): Promise<T | null>
-  failure: Ref<LoadFailure | null>
 }
 export function useLoader(): Loader {
-  const loading = computed(() => inProgress.value !== 0)
-  const loaded = ref(false)
+  const state = reactive({
+    loaded: false,
+    inProgress: 0,
+    failure: null,
+  })
 
-  const inProgress = ref(0)
-
-  const failure: Ref<LoadFailure | null> = ref(null)
+  const loading = computed(() => state.inProgress !== 0)
+  const loaded = computed(() => state.loaded)
+  const failure = computed(() => state.failure)
 
   async function load<T>(func: () => Promise<T>): Promise<T | null> {
-    inProgress.value++
+    state.inProgress++
     try {
       const result = await func()
-      failure.value = null
+      state.failure = null
       return result
     } catch (error) {
-      failure.value = error?.description || JSON.stringify(error)
+      state.failure = error?.description || JSON.stringify(error)
       throw error
     } finally {
-      inProgress.value--
-      loaded.value = true
+      state.inProgress--
+      state.loaded = true
     }
   }
 
