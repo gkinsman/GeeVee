@@ -34,6 +34,9 @@
         <q-btn stretch flat icon="add" to="/edit">Add Project Root</q-btn>
 
         <q-space />
+        <q-btn stretch flat href="https://github.com/gkinsman/GeeVee"
+          ><img class="github-logo" src="github-mark-white.png"
+        /></q-btn>
       </q-toolbar>
     </q-header>
 
@@ -54,5 +57,9 @@ const { projectRoots } = useProjectRootStore()
   &.q-focus-helper:hover {
     opacity: 0;
   }
+}
+
+.github-logo {
+  width: 40px;
 }
 </style>
