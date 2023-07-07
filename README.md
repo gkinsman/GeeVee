@@ -4,6 +4,14 @@
 
 A GitLab project and variable viewer
 
+## Demo
+
+
+
+https://github.com/gkinsman/GeeVee/assets/130231/fdf2c59a-cda2-47d8-ab15-dfc79a1c846f
+
+
+
 ## Install the dependencies
 ```bash
 yarn
