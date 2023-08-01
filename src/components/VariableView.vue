@@ -6,7 +6,7 @@
           class="q-pa-xs"
           clickable
           square
-          size="xs"
+          size="sm"
           flat
           @click="copy"
           icon="content_copy"
